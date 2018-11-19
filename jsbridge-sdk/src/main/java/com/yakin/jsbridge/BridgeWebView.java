@@ -7,6 +7,7 @@ import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,6 +57,14 @@ public class BridgeWebView extends WebView implements IBridge {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             WebView.setWebContentsDebuggingEnabled(true);
         }
+    }
+
+    @Override
+    public void setWebViewClient(WebViewClient client) {
+        if(!(client instanceof BridgeWebViewClient)) {
+            LogUtil.e("Not support JsBridge, pls setWebViewClient(BridgeWebViewClient)");
+        }
+        super.setWebViewClient(client);
     }
 
     public void setHandler(JsCallback handler) {

@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
 
         mWebView.loadUrl("file:///android_asset/demo.html");
         mWebView.setHandler(new WebHandler());
+        mWebView.setWebViewClient(new WebBridgeClient(mWebView));
 
         findViewById(R.id.click).setOnClickListener(new View.OnClickListener() {
             @Override
