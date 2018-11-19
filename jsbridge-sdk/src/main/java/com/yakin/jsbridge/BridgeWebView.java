@@ -127,7 +127,7 @@ public class BridgeWebView extends WebView implements IBridge {
     void callbackToJava(String url) {
         BridgeMessage message = BridgeUtil.getCallbackMessageFromUrl(url);
         if(message != null) {
-            IBridgeCallback callback = mCallbackMap.get(message.id);
+            IBridgeCallback callback = mCallbackMap.remove(message.id);
             if(callback != null) {
                 callback.onJsCallback(message.param);
             }
