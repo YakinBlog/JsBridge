@@ -62,6 +62,14 @@
         execIframe.src = SCHEME + CALLBACK_METHOD + JSON.stringify(params);
     }
 
+    // JsBridge加载成功的回调
+    function _initJavascriptBridge() {
+        if(JsBridge) {
+            console.log("_initJavascriptBridge was called.");
+            eval('JsBridgeReady()');
+        }
+    }
+
     window.JsBridge = {
         call: _callNativeMethod,
         invoke: _dispatchCallBackToNative,
@@ -69,5 +77,6 @@
         _dispatchCallBack: _dispatchCallBackFromNative
     };
 
-     _createExecIframe(document);
+    _createExecIframe(document);
+    _initJavascriptBridge();
 })();

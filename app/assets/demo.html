@@ -11,12 +11,23 @@
         <p><xmp id="show"></xmp></p>
     </body>
     <script>
+        // 如果想页面一加载完成就调用Native方法，需要放到此方法内实现
+        JsBridgeReady = function() {
+            console.log("onJsBridgeReady was called.");
+            JsBridge.call('testJava'
+                , "来自JS的问候"
+                , function(data) {
+                    console.log("testClick1 callback." + data);
+                    document.getElementById("show").innerHTML = data
+                });
+        }
+
         function testDiv() {
             document.getElementById("show").innerHTML = document.getElementsByTagName("html")[0].innerHTML;
         }
         function testClick() {
             console.log("testClick was called.");
-            window.JsBridge.call('testJava'
+            JsBridge.call('testJava'
                 , "来自JS的问候"
                 , function(data) {
                     console.log("testClick1 callback." + data);
@@ -27,7 +38,7 @@
         function testJs(id, param) {
             console.log("testJs was called.");
             document.getElementById("show").innerHTML = "id:" + id + ", param:" + param;
-            window.JsBridge.invoke(id, "来回JS的回复");
+            JsBridge.invoke(id, "来回JS的回复");
         }
     </script>
     <!--<script src="JsBridge.js"></script>-->

@@ -123,6 +123,14 @@ public class BridgeUtil {
         execIframe.src = SCHEME + CALLBACK_METHOD + JSON.stringify(params);
     }
 
+    // JsBridge加载成功的回调
+    function _initJavascriptBridge() {
+        if(JsBridge) {
+            console.log("_initJavascriptBridge was called.");
+            eval('JsBridgeReady()');
+        }
+    }
+
     window.JsBridge = {
         call: _callNativeMethod,
         invoke: _dispatchCallBackToNative,
@@ -130,7 +138,8 @@ public class BridgeUtil {
         _dispatchCallBack: _dispatchCallBackFromNative
     };
 
-     _createExecIframe(document);
+    _createExecIframe(document);
+    _initJavascriptBridge();
 })();
 */
     static String getJsBridgeScript() {
@@ -151,12 +160,8 @@ public class BridgeUtil {
                     "function _callNativeMethod(method,param,callback){" +
                         "var callbackId=method+\"_\"+(uniqueId++)+\"_\"+new Date().getTime();" +
                         "var params={id:callbackId,param:param};" +
-                        "if(callback){" +
-                            "callbacks[callbackId]=callback" +
-                        "}" +
-                        "if(method){" +
-                            "execIframe.src=SCHEME+CALL_METHOD+method+\"/\"+JSON.stringify(params)" +
-                        "}" +
+                        "if(callback){callbacks[callbackId]=callback}" +
+                        "if(method){execIframe.src=SCHEME+CALL_METHOD+method+\"/\"+JSON.stringify(params)}" +
                     "}" +
                     "function _dispatchCallBackFromNative(callbackId,result){" +
                         "if(callbackId){" +
@@ -168,13 +173,14 @@ public class BridgeUtil {
                         "}" +
                     "}" +
                     "function _callJsMethodFromNative(method,id,param){" +
-                        "if(method){" +
-                            "eval(method+'(\"'+id+'\",\"'+param+'\")')" +
-                        "}" +
+                        "if(method){eval(method+'(\"'+id+'\",\"'+param+'\")')}" +
                     "}" +
                     "function _dispatchCallBackToNative(id,param){" +
                         "var params={id:id,param:param};" +
                         "execIframe.src=SCHEME+CALLBACK_METHOD+JSON.stringify(params)" +
+                    "}" +
+                    "function _initJavascriptBridge(){" +
+                        "if(JsBridge){eval(\"JsBridgeReady()\")}" +
                     "}" +
                     "window.JsBridge={" +
                         "call:_callNativeMethod," +
@@ -182,7 +188,8 @@ public class BridgeUtil {
                         "_callJsMethod:_callJsMethodFromNative," +
                         "_dispatchCallBack:_dispatchCallBackFromNative" +
                     "};" +
-                    "_createExecIframe(document)" +
+                    "_createExecIframe(document);" +
+                    "_initJavascriptBridge()" +
                 "})();";
     }
 }
