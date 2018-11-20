@@ -16,12 +16,12 @@ public class BridgeUtil {
     static BridgeMessage getCallMessageFromUrl(String url) {
         LogUtil.d("getMessageFromUrl was called:[%s]", url);
         String filter = url.replace(CALL_METHOD, "");
-        String[] functionAndData = filter.split("/");
-        if(functionAndData.length >= 1 && !TextUtils.isEmpty(functionAndData[0])) {
+        int index = filter.indexOf("/");
+        if(index > 0) {
             BridgeMessage message = new BridgeMessage();
-            message.functionName = functionAndData[0];
-            if(functionAndData.length > 1) {
-                message.parseJson(functionAndData[1]);
+            message.functionName = filter.substring(0, index);
+            if(filter.length() > index) {
+                message.parseJson(filter.substring(index + 1));
             }
             return message;
         }
