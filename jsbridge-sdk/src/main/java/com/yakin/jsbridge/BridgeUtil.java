@@ -1,7 +1,5 @@
 package com.yakin.jsbridge;
 
-import android.text.TextUtils;
-
 import java.lang.reflect.Method;
 
 public class BridgeUtil {
@@ -10,12 +8,20 @@ public class BridgeUtil {
     final static String CALL_METHOD = SCHEMA + "call/";	// 格式为 jsbridge://call/[function]/[data]
     final static String CALLBACK_DATA = SCHEMA + "callback/";	//格式为 jsbridge://callback/[function]/[data]
 
+    final static String METHOD_RESULT = "result";
+    final static String NO_SUCH_METHOD = "NoSuchMethod";
+
     final static String DISPATCH_JS_CALLBACK = "javascript:JsBridge._dispatchCallBack('%s', '%s');";
     final static String CALL_JS_METHOD = "javascript:JsBridge._callJsMethod('%s', '%s', '%s');";
 
-    static BridgeMessage getCallMessageFromUrl(String url) {
+    static BridgeMessage getMessageFromUrl(String url) {
         LogUtil.d("getMessageFromUrl was called:[%s]", url);
-        String filter = url.replace(CALL_METHOD, "");
+        String filter = "";
+        if(url.startsWith(CALL_METHOD)) {
+            filter = url.replace(CALL_METHOD, "");
+        } else if(url.startsWith(CALLBACK_DATA)) {
+            filter = url.replace(CALLBACK_DATA, "");
+        }
         int index = filter.indexOf("/");
         if(index > 0) {
             BridgeMessage message = new BridgeMessage();
@@ -29,19 +35,7 @@ public class BridgeUtil {
         return null;
     }
 
-    static BridgeMessage getCallbackMessageFromUrl(String url) {
-        LogUtil.d("getMessageFromUrl was called:[%s]", url);
-        String data = url.replace(CALLBACK_DATA, "");
-        if(!TextUtils.isEmpty(data)) {
-            BridgeMessage message = new BridgeMessage();
-            message.parseJson(data);
-            return message;
-        }
-        LogUtil.e("Not found callback data:[%s]", url);
-        return null;
-    }
-
-    static void callJavaMethod(Object object, BridgeMessage message) {
+    static boolean callJavaMethod(Object object, BridgeMessage message) {
         Class clazz = object.getClass();
         try {
             Method function = clazz.getMethod(message.functionName, String.class, String.class);
@@ -54,8 +48,10 @@ public class BridgeUtil {
                 param = "";
             }
             function.invoke(object, id, param);
+            return true;
         } catch (Exception e) {
             LogUtil.e(e, "%s.%s(String, String) call failed", clazz.getName(), message.functionName);
+            return false;
         }
     }
 /*
@@ -64,6 +60,9 @@ public class BridgeUtil {
     var CALL_METHOD = 'call/';
     var CALLBACK_METHOD = 'callback/';
 
+    var METHOD_RESULT = 'result/';
+    var NO_SUCH_METHOD = "NoSuchMethod";
+
     var execIframe;
 
     var callbacks = {};
@@ -71,7 +70,7 @@ public class BridgeUtil {
 
     // 创建消息发送器iframe
     function _createExecIframe(doc) {
-        console.log('_createExecIframe was called');
+        console.log('_createExecIframe was called.');
         execIframe = doc.createElement('iframe');
         execIframe.style.display = 'none';
         doc.documentElement.appendChild(execIframe);
@@ -79,7 +78,7 @@ public class BridgeUtil {
 
     // 调用Native方法
     function _callNativeMethod(method, param, callback) {
-        console.log('_callNativeMethod was called');
+        console.log('_callNativeMethod was called.');
         var callbackId = method + '_' + (uniqueId++) + '_' + new Date().getTime();
         var params = {
             id: callbackId,
@@ -95,7 +94,7 @@ public class BridgeUtil {
 
     // 处理Native回调
     function _dispatchCallBackFromNative(callbackId, result) {
-        console.log('_dispatchNativeCallBack was called');
+        console.log('_dispatchNativeCallBack was called.');
         if(callbackId) {
             var callback = callbacks[callbackId];
             if (callback) {
@@ -107,27 +106,40 @@ public class BridgeUtil {
 
     // 调用Js方法
     function _callJsMethodFromNative(method, id, param) {
-        console.log('_callJsMethodFromNative was called');
+        console.log('_callJsMethodFromNative was called.');
         if(method) {
-            eval(method + '("' + id + '","' + param + '")');
+            try {
+                eval(method + '("' + id + '","' + param + '")');
+            } catch(e) {
+                console.log('Not found ' + method + ' method.');
+                var params = {
+                    id: id,
+                    param: NO_SUCH_METHOD
+                }
+                execIframe.src = SCHEME + CALLBACK_METHOD + METHOD_RESULT + JSON.stringify(params);
+            }
         }
     }
 
     // 处理Js回调
     function _dispatchCallBackToNative(id, param) {
-        console.log('_dispatchCallBackToNative was called');
+        console.log('_dispatchCallBackToNative was called.');
         var params = {
             id: id,
             param: param
         }
-        execIframe.src = SCHEME + CALLBACK_METHOD + JSON.stringify(params);
+        execIframe.src = SCHEME + CALLBACK_METHOD + METHOD_RESULT + JSON.stringify(params);
     }
 
     // JsBridge加载成功的回调
     function _initJavascriptBridge() {
         if(JsBridge) {
             console.log("_initJavascriptBridge was called.");
-            eval('JsBridgeReady()');
+            try {
+                eval('JsBridgeReady()');
+            } catch(e) {
+                console.log("Not found JsBridgeReady mathod.");
+            }
         }
     }
 
@@ -143,12 +155,13 @@ public class BridgeUtil {
 })();
 */
     static String getJsBridgeScript() {
-        // 初始化变量
         return "javascript:" +
                 "(function(){" +
                     "var SCHEME=\"jsbridge://\";" +
                     "var CALL_METHOD=\"call/\";" +
                     "var CALLBACK_METHOD=\"callback/\";" +
+                    "var METHOD_RESULT=\"result/\";" +
+                    "var NO_SUCH_METHOD=\"NoSuchMethod\";" +
                     "var execIframe;" +
                     "var callbacks={};" +
                     "var uniqueId=1;" +
@@ -173,14 +186,21 @@ public class BridgeUtil {
                         "}" +
                     "}" +
                     "function _callJsMethodFromNative(method,id,param){" +
-                        "if(method){eval(method+'(\"'+id+'\",\"'+param+'\")')}" +
+                        "if(method){" +
+                            "try{" +
+                                "eval(method+'(\"'+id+'\",\"'+param+'\")')" +
+                            "}catch(e){" +
+                                "var params={id:id,param:NO_SUCH_METHOD};" +
+                                "execIframe.src=SCHEME+CALLBACK_METHOD+METHOD_RESULT+JSON.stringify(params)" +
+                            "}" +
+                        "}" +
                     "}" +
                     "function _dispatchCallBackToNative(id,param){" +
                         "var params={id:id,param:param};" +
-                        "execIframe.src=SCHEME+CALLBACK_METHOD+JSON.stringify(params)" +
+                        "execIframe.src=SCHEME+CALLBACK_METHOD+METHOD_RESULT+JSON.stringify(params)" +
                     "}" +
                     "function _initJavascriptBridge(){" +
-                        "if(JsBridge){eval(\"JsBridgeReady()\")}" +
+                        "if(JsBridge){try{eval(\"JsBridgeReady()\")}catch(e){}}" +
                     "}" +
                     "window.JsBridge={" +
                         "call:_callNativeMethod," +

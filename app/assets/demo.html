@@ -14,7 +14,7 @@
         // 如果想页面一加载完成就调用Native方法，需要放到此方法内实现
         JsBridgeReady = function() {
             console.log("onJsBridgeReady was called.");
-            JsBridge.call('testJava'
+            JsBridge.call('testJava1'
                 , "来自JS的问候"
                 , function(data) {
                     console.log("testClick1 callback." + data);

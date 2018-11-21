@@ -3,6 +3,9 @@
     var CALL_METHOD = 'call/';
     var CALLBACK_METHOD = 'callback/';
 
+    var METHOD_RESULT = 'result/';
+    var NO_SUCH_METHOD = "NoSuchMethod";
+
     var execIframe;
 
     var callbacks = {};
@@ -10,7 +13,7 @@
 
     // 创建消息发送器iframe
     function _createExecIframe(doc) {
-        console.log('_createExecIframe was called');
+        console.log('_createExecIframe was called.');
         execIframe = doc.createElement('iframe');
         execIframe.style.display = 'none';
         doc.documentElement.appendChild(execIframe);
@@ -18,7 +21,7 @@
 
     // 调用Native方法
     function _callNativeMethod(method, param, callback) {
-        console.log('_callNativeMethod was called');
+        console.log('_callNativeMethod was called.');
         var callbackId = method + '_' + (uniqueId++) + '_' + new Date().getTime();
         var params = {
             id: callbackId,
@@ -34,7 +37,7 @@
 
     // 处理Native回调
     function _dispatchCallBackFromNative(callbackId, result) {
-        console.log('_dispatchNativeCallBack was called');
+        console.log('_dispatchNativeCallBack was called.');
         if(callbackId) {
             var callback = callbacks[callbackId];
             if (callback) {
@@ -46,27 +49,40 @@
 
     // 调用Js方法
     function _callJsMethodFromNative(method, id, param) {
-        console.log('_callJsMethodFromNative was called');
+        console.log('_callJsMethodFromNative was called.');
         if(method) {
-            eval(method + '("' + id + '","' + param + '")');
+            try {
+                eval(method + '("' + id + '","' + param + '")');
+            } catch(e) {
+                console.log('Not found ' + method + ' method.');
+                var params = {
+                    id: id,
+                    param: NO_SUCH_METHOD
+                }
+                execIframe.src = SCHEME + CALLBACK_METHOD + METHOD_RESULT + JSON.stringify(params);
+            }
         }
     }
 
     // 处理Js回调
     function _dispatchCallBackToNative(id, param) {
-        console.log('_dispatchCallBackToNative was called');
+        console.log('_dispatchCallBackToNative was called.');
         var params = {
             id: id,
             param: param
         }
-        execIframe.src = SCHEME + CALLBACK_METHOD + JSON.stringify(params);
+        execIframe.src = SCHEME + CALLBACK_METHOD + METHOD_RESULT + JSON.stringify(params);
     }
 
     // JsBridge加载成功的回调
     function _initJavascriptBridge() {
         if(JsBridge) {
             console.log("_initJavascriptBridge was called.");
-            eval('JsBridgeReady()');
+            try {
+                eval('JsBridgeReady()');
+            } catch(e) {
+                console.log("Not found JsBridgeReady mathod.");
+            }
         }
     }
 

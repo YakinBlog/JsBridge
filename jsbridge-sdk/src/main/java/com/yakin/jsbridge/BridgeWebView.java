@@ -107,9 +107,11 @@ public class BridgeWebView extends WebView implements IBridge {
             LogUtil.e("Handler not found, pls call setHandler()");
             return;
         }
-        BridgeMessage message = BridgeUtil.getCallMessageFromUrl(url);
+        BridgeMessage message = BridgeUtil.getMessageFromUrl(url);
         if(message != null) {
-            BridgeUtil.callJavaMethod(mHandler, message);
+            if(!BridgeUtil.callJavaMethod(mHandler, message)) {
+                callbackToJs(message.id, BridgeUtil.NO_SUCH_METHOD);
+            }
         }
     }
 
@@ -128,11 +130,13 @@ public class BridgeWebView extends WebView implements IBridge {
     }
 
     void callbackToJava(String url) {
-        BridgeMessage message = BridgeUtil.getCallbackMessageFromUrl(url);
+        BridgeMessage message = BridgeUtil.getMessageFromUrl(url);
         if(message != null) {
             IBridgeCallback callback = mCallbackMap.remove(message.id);
             if(callback != null) {
-                callback.onJsCallback(message.param);
+                if(BridgeUtil.METHOD_RESULT.equals(message.functionName)) {
+                    callback.onJsCallback(message.param);
+                }
             }
         }
     }

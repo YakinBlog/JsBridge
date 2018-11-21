@@ -22,7 +22,7 @@ public class BridgeMessage {
                 param = object.getString(PARAM);
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            LogUtil.e(e, "Json parse failed:%s", data);
         }
     }
 }
