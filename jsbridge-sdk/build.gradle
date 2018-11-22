@@ -23,3 +23,5 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
+
+apply from: 'publish_bintray.gradle' // 发布maven

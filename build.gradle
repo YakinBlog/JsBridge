@@ -19,6 +19,8 @@ allprojects {
     repositories {
         google()
         jcenter()
+
+        maven {url 'https://dl.bintray.com/yakin/maven'} // jcenter审核期间可以临时使用私有控件
     }
 }
 

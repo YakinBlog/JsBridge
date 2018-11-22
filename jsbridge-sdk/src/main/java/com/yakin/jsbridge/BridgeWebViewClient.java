@@ -22,11 +22,11 @@ public class BridgeWebViewClient extends WebViewClient {
 
     private boolean shouldOverrideUrlLoading(String url) {
         LogUtil.d("shouldOverrideUrlLoading was called:%s", url);
-        try {
-            url = URLDecoder.decode(url, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            LogUtil.e(e, "url decode failed");
-        }
+//        try {
+//            url = URLDecoder.decode(url, "UTF-8");
+//        } catch (UnsupportedEncodingException e) {
+//            LogUtil.e(e, "url decode failed");
+//        }
         if (url.startsWith(BridgeUtil.CALLBACK_DATA)) {
             mWebView.callbackToJava(url);
             return true;

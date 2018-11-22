@@ -1,0 +1,117 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        // https://github.com/bintray/gradle-bintray-plugin
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7"
+    }
+}
+
+// apply the plugin with its class name rather than its Id to work around gradle limitation of
+// not being able to find the plugin by Id despite the dependencies being added right above. Gradle
+// is currently not capable of loading plugins by Id if the dependency is anywhere else than
+// in the main project build.gradle. This file is "imported" into the project's build.gradle
+// through a "apply from:".
+apply plugin: com.jfrog.bintray.gradle.BintrayPlugin
+apply plugin: 'maven-publish'
+
+// 一定要用命令行发布
+// 发布命令  ./gradlew bintrayUpload
+// 发布成功后在jcenter审核期间可以使用临时的私有空间测试下载依赖
+// 在工程build.gradle的allprojects里增加 maven {url 'https://dl.bintray.com/yakin/maven'}
+// jcenter公共空间地址：https://jcenter.bintray.com/
+project.ext.groupId = 'com.yakin.support'
+project.ext.artifactId = 'jsbridge'
+project.ext.version = '0.0.1'
+project.ext.describe = 'Native and JS call each other'
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+afterEvaluate {
+    // 发布前先打包正式包
+    tasks.bintrayUpload.dependsOn assembleRelease
+
+    javadoc.classpath += files(android.libraryVariants.collect { variant ->
+        variant.javaCompile.classpath.files
+    })
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+// 发布aar
+publishing {
+    publications {
+        library(MavenPublication) {
+            groupId project.ext.groupId
+            artifactId project.ext.artifactId
+            version project.ext.version
+
+            // Release AAR, Sources, and JavaDoc
+            artifact "$project.buildDir/outputs/aar/$project.name-release.aar"
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.implementation.allDependencies.each {
+                    if (it.group == null) return
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
+                }
+            }
+
+        }
+    }
+}
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+// 上传到bintray
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+
+    publications = [ 'library' ]
+
+    pkg {
+        repo = 'maven'
+        group = project.ext.groupId
+        name = project.ext.groupId + ':' + project.ext.artifactId
+        desc = project.ext.describe
+        licenses = [ 'Apache-2.0' ] // 不能随便写，只能是仓库创建时选择的license
+        websiteUrl = 'http://yakinblog.com'
+        vcsUrl = 'https://github.com/YakinBlog/JsBridge.git'
+        labels = ['android', 'js', 'jsbridge']
+        publicDownloadNumbers = true
+
+        version {
+            name = project.ext.version // 版本号
+            desc = project.ext.describe + ' version ' + project.ext.version // 版本描述
+            vcsTag = project.ext.version // 最新的git tag
+            released = new Date() // 发布时间
+        }
+    }
+}
