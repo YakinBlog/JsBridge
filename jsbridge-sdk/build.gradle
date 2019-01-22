@@ -24,4 +24,15 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
 
-apply from: 'publish_bintray.gradle' // 发布maven
+ext {
+    groupId = 'com.yakin.support'
+    artifactId = 'jsbridge'
+    versionName = '0.0.1'
+    describe = 'Native and JS call each other'
+
+    licenses = [ 'Apache-2.0' ]
+    websiteUrl = 'http://yakinblog.com'
+    vcsUrl = 'https://github.com/YakinBlog/JsBridge.git'
+    labels = ['android', 'js', 'jsbridge']
+}
+apply from: 'https://raw.githubusercontent.com/YakinBlog/buildscript/master/publish_bintray.gradle'
