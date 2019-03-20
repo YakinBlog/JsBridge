@@ -109,7 +109,7 @@ public class BridgeUtil {
         console.log('_callJsMethodFromNative was called.');
         if(method) {
             try {
-                eval(method + '("' + id + '","' + param + '")');
+                eval(method + '(\'' + id + '\',\'' + param + '\')');
             } catch(e) {
                 console.log('Not found ' + method + ' method.');
                 var params = {
@@ -188,7 +188,7 @@ public class BridgeUtil {
                     "function _callJsMethodFromNative(method,id,param){" +
                         "if(method){" +
                             "try{" +
-                                "eval(method+'(\"'+id+'\",\"'+param+'\")')" +
+                                "eval(method + '(\\''+id+'\\',\\''+param+'\\')');" +
                             "}catch(e){" +
                                 "var params={id:id,param:NO_SUCH_METHOD};" +
                                 "execIframe.src=SCHEME+CALLBACK_METHOD+METHOD_RESULT+JSON.stringify(params)" +

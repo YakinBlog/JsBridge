@@ -28,7 +28,7 @@
         function testClick() {
             console.log("testClick was called.");
             JsBridge.call('testJava'
-                , "来自JS的问候"
+                , {key1:'val1',key2:'val2'}
                 , function(data) {
                     console.log("testClick1 callback." + data);
                     document.getElementById("show").innerHTML = data

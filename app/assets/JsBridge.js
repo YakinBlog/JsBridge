@@ -52,7 +52,7 @@
         console.log('_callJsMethodFromNative was called.');
         if(method) {
             try {
-                eval(method + '("' + id + '","' + param + '")');
+                eval(method + '(\'' + id + '\',\'' + param + '\')');
             } catch(e) {
                 console.log('Not found ' + method + ' method.');
                 var params = {

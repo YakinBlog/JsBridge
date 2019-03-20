@@ -8,6 +8,9 @@ import com.yakin.jsbridge.BridgeWebView;
 import com.yakin.jsbridge.IBridgeCallback;
 import com.yakin.jsbridge.LogUtil;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class MainActivity extends AppCompatActivity {
 
     BridgeWebView mWebView;
@@ -28,7 +31,15 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.click).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mWebView.call("testJs", "来自Native的问候", new IBridgeCallback() {
+                JSONObject json = new JSONObject();
+                try {
+                    json.put("key1", "value1");
+                    json.put("key2", "value2");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                mWebView.call("testJs", json.toString(), new IBridgeCallback() {
                     @Override
                     public void onJsCallback(String result) {
                         LogUtil.d("onJsCallback was called:%s", result);
