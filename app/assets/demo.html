@@ -1,0 +1,46 @@
+<html>
+    <head>
+        <meta content="text/html; charset=utf-8" http-equiv="content-type">
+        <title>JsBridge</title>
+    </head>
+
+    <body>
+        <p><input type="button" id="enter" value="发消息给Native" onclick="testClick();"/></p>
+        <p><input type="button" id="enter2" value="显示html" onclick="testDiv();" /></p>
+        <p><input type="file" value="打开文件" /></p>
+        <p><xmp id="show"></xmp></p>
+    </body>
+    <script>
+        // 如果想页面一加载完成就调用Native方法，需要放到此方法内实现
+        JsBridgeReady = function() {
+            console.log("onJsBridgeReady was called.");
+            JsBridge.call('testJava1'
+                , "来自JS的问候"
+                , function(data) {
+                    console.log("testClick1 callback." + data);
+                    document.getElementById("show").innerHTML = data
+                });
+        }
+
+        function testDiv() {
+            document.getElementById("show").innerHTML = document.getElementsByTagName("html")[0].innerHTML;
+        }
+        function testClick() {
+            console.log("testClick was called.");
+            JsBridge.call('testJava'
+                , {key1:'val1',key2:'val2'}
+                , function(data) {
+                    console.log("testClick1 callback." + data);
+                    document.getElementById("show").innerHTML = data
+                });
+        }
+
+        function testJs(id, param) {
+            console.log("testJs was called.");
+            document.getElementById("show").innerHTML = "id:" + id + ", param:" + param;
+            JsBridge.invoke(id, "来回JS的回复");
+        }
+    </script>
+    <!--<script src="JsBridge.js"></script>-->
+</html>
+
